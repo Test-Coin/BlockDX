@@ -1139,6 +1139,20 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             snode.Compress();
         }
         sPubKey = std::vector<unsigned char>(snode.begin(), snode.end());
+
+        CServicenode *pmn = mnodeman.Find(snode);
+        if (pmn == nullptr) {
+            // try to uncompress pubkey and search
+            auto k = snode;
+            if (k.Decompress()) {
+                pmn = mnodeman.Find(k);
+            }
+            if (pmn == nullptr) {
+                ERR() << "servicenode in xwallets is not in servicenode list " << __FUNCTION__;
+                return xbridge::Error::NO_SERVICE_NODE;
+            }
+        }
+        LOG() << "using servicenode with vin " << pmn->vin.prevout.hash.ToString();
     }
 
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
